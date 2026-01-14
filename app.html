@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Teamgenerator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            max-width: 800px;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 6px 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #f0f0f0;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Spielerliste</h1>
+<input type="file" id="csvInput" accept=".csv">
+<p id="status"></p>
+
+<table id="spielerTabelle">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Mannschaft</th>
+            <th>Staerke</th>
+        </tr>
+    </thead>
+    <tbody>
+        <!-- Spieler werden hier eingefuegt -->
+    </tbody>
+</table>
+
+<script>
+    const input = document.getElementById('csvInput');
+    const status = document.getElementById('status');
+    const tbody = document.querySelector('#spielerTabelle tbody');
+
+    input.addEventListener('change', () => {
+        const file = input.files[0];
+        if (!file) return;
+
+        if (!file.name.toLowerCase().endsWith('.csv')) {
+            status.textContent = 'Bitte eine CSV-Datei auswählen.';
+            return;
+        }
+
+        const reader = new FileReader();
+
+        reader.onload = event => {
+            tbody.innerHTML = '';
+            const text = event.target.result.trim();
+            const zeilen = text.split('\n');
+
+            // Kopfzeile entfernen
+            zeilen.shift();
+
+            zeilen.forEach(zeile => {
+                const spalten = zeile.split(',');
+                if (spalten.length < 4) return;
+
+                const name = spalten[0].trim();
+                const staerke = spalten[2].trim();
+                const mannschaft = spalten[3].trim();
+
+                const tr = document.createElement('tr');
+
+                [name, mannschaft, staerke].forEach(wert => {
+                    const td = document.createElement('td');
+                    td.textContent = wert;
+                    tr.appendChild(td);
+                });
+
+                tbody.appendChild(tr);
+            });
+
+            status.textContent = 'Spielerliste geladen: ' + (zeilen.length) + ' Eintraege.';
+        };
+
+        reader.onerror = () => {
+            status.textContent = 'Fehler beim Lesen der Datei.';
+        };
+
+        reader.readAsText(file);
+    });
+</script>
+
+</body>
+</html>
