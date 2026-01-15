@@ -22,15 +22,15 @@
 
         table {
             border-collapse: collapse;
-            width: 100%;
-            max-width: 800px;
+            width: auto;
             background-color: #1e1e1e;
         }
 
         th, td {
             border: 1px solid #333;
-            padding: 6px 10px;
+            padding: 6px 12px;
             text-align: left;
+            white-space: nowrap;
         }
 
         th {
@@ -52,14 +52,36 @@
         }
 
         tr.abwesend {
-            opacity: 0.45;
+            opacity: 0.2;
         }
 
         th.anwesend-spalte,
         td.anwesend-spalte {
-            width: 1%;
-            white-space: nowrap;
+            width: auto;
             text-align: center;
+        }
+
+        td.anwesend-spalte {
+            padding-left: 18px;
+            padding-right: 18px;
+        }
+
+        td.anwesend-spalte input[type="checkbox"] {
+            transform: scaleX(1.6);
+            cursor: pointer;
+        }
+
+        td.anwesend-spalte {
+            cursor: pointer;
+            background-color: #1e1e1e;
+        }
+
+        tr.anwesend td.anwesend-spalte {
+            background-color: #2e7d32;
+        }
+
+        tr.abwesend td.anwesend-spalte {
+            background-color: #444;
         }
     </style>
 </head>
@@ -72,7 +94,7 @@
 <table id="spielerTabelle">
     <thead>
         <tr>
-            <th class="anwesend-spalte">Anwesend</th>
+            <th class="anwesend-spalte">Status</th>
             <th>Name</th>
             <th>Mannschaft</th>
             <th>Stärke</th>
@@ -109,10 +131,7 @@
                 let count = 0;
 
                 zeilen.forEach(zeile => {
-                    const checkbox = zeile.querySelector('input[type="checkbox"]');
-                    if (!checkbox) return;
-
-                    if (checkbox.checked) {
+                    if (zeile.classList.contains('anwesend')) {
                         count++;
                         zeile.classList.remove('abwesend');
                     } else {
@@ -139,14 +158,17 @@
 
                 const tr = document.createElement('tr');
 
-                const tdCheckbox = document.createElement('td');
-                tdCheckbox.classList.add('anwesend-spalte');
-                const checkbox = document.createElement('input');
-                checkbox.type = 'checkbox';
-                checkbox.checked = true;
-                checkbox.addEventListener('change', updateZaehler);
-                tdCheckbox.appendChild(checkbox);
-                tr.appendChild(tdCheckbox);
+                tr.classList.add('anwesend');
+
+                const tdStatus = document.createElement('td');
+                tdStatus.classList.add('anwesend-spalte');
+
+                tdStatus.addEventListener('click', () => {
+                    tr.classList.toggle('anwesend');
+                    updateZaehler();
+                });
+
+                tr.appendChild(tdStatus);
 
                 [name, mannschaft, staerke].forEach(wert => {
                     const td = document.createElement('td');
