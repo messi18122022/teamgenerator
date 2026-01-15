@@ -213,24 +213,78 @@
         .chevron.offen {
             transform: rotate(45deg);
         }
-    /* Animation fuer Ein- und Ausklappen der Tabelle */
+    /* Slide-Up/Down Animation nur für Inhalte, Titel bleiben sichtbar */
     #spielerTabelle,
     #anwesendZaehler,
-    #csvLabel {
+    #csvLabel,
+    #einstellungenSection {
         overflow: hidden;
-        transition: max-height 0.35s ease, opacity 0.25s ease;
+        transition: max-height 0.4s ease, margin 0.4s ease, padding 0.4s ease;
+        max-height: 2000px;
     }
 
-    .eingeklappt {
+    .inhalt {
+        transition: max-height 0.4s ease, margin 0.4s ease, padding 0.4s ease;
+        max-height: 2000px;
+        overflow: hidden;
+    }
+
+    .inhalt.eingeklappt {
         max-height: 0 !important;
-        opacity: 0;
+        margin: 0 !important;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
         pointer-events: none;
     }
 
-    .ausgeklappt {
+    .inhalt.ausgeklappt {
         max-height: 2000px;
-        opacity: 1;
+        margin: initial;
+        padding-top: initial;
+        padding-bottom: initial;
+        pointer-events: auto;
     }
+
+        /* Einheitliche Größe für alle Abschnittstitel */
+        h1#titelToggle,
+        h2#einstellungenToggle {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        /* Schöne Eingabefelder für Einstellungen */
+        #einstellungenInhalt input {
+            width: 100px;
+            padding: 8px 10px;
+            font-size: 14px;
+            border: 1px solid #888;
+            border-radius: 6px;
+            background-color: #f9f9f9;
+            color: #000;
+            outline: none;
+            transition: background-color 0.2s, border-color 0.2s, box-shadow 0.2s;
+        }
+
+        #einstellungenInhalt input:focus {
+            border-color: #2196f3;
+            box-shadow: 0 0 5px rgba(33, 150, 243, 0.5);
+            background-color: #e3f2fd;
+        }
+
+        body.dark-mode #einstellungenInhalt input {
+            background-color: #1e1e1e;
+            color: #e0e0e0;
+            border: 1px solid #555;
+        }
+
+        body.dark-mode #einstellungenInhalt input:focus {
+            background-color: #2c3e50;
+            box-shadow: 0 0 5px rgba(33, 150, 243, 0.5);
+        }
+
+        #einstellungenInhalt input.dimmed {
+            opacity: 0.5;
+        }
     </style>
 </head>
 <body class="dark-mode">
@@ -241,26 +295,42 @@
     <span id="chevron" class="chevron geschlossen"></span>
     Spielerliste
 </h1>
-<label id="csvLabel">
-    <span id="csvIcon">📄</span>
-    <span id="csvText">Datei auswählen</span>
-    <input type="file" id="csvInput" accept=".csv" hidden>
-</label>
+<div id="spielerListeInhalt" class="inhalt ausgeklappt">
+    <label id="csvLabel">
+        <span id="csvIcon">📄</span>
+        <span id="csvText">Datei auswählen</span>
+        <input type="file" id="csvInput" accept=".csv" hidden>
+    </label>
 
-<table id="spielerTabelle" class="dark-mode">
-    <thead>
-        <tr>
-            <th class="anwesend-spalte dark-mode">Status</th>
-            <th class="dark-mode">Name</th>
-            <th class="dark-mode">Mannschaft</th>
-            <th class="dark-mode">Stärke</th>
-        </tr>
-    </thead>
-    <tbody>
-        <!-- Spieler werden hier eingefuegt -->
-    </tbody>
-</table>
-<p id="anwesendZaehler"><em>0 Spieler anwesend.</em></p>
+    <table id="spielerTabelle" class="dark-mode">
+        <thead>
+            <tr>
+                <th class="anwesend-spalte dark-mode">Status</th>
+                <th class="dark-mode">Name</th>
+                <th class="dark-mode">Mannschaft</th>
+                <th class="dark-mode">Stärke</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Spieler werden hier eingefuegt -->
+        </tbody>
+    </table>
+
+    <p id="anwesendZaehler"><em>0 Spieler anwesend.</em></p>
+</div>
+
+<h2 id="einstellungenToggle" style="cursor: pointer; user-select: none; display: flex; align-items: center; gap: 8px;">
+    <span id="chevronEinstellungen" class="chevron geschlossen"></span>
+    Einstellungen
+</h2>
+<div id="einstellungenInhalt" class="inhalt ausgeklappt">
+    <label>
+        Spieler pro Team: <input type="number" id="spielerProTeam" min="1">
+    </label>
+    <label>
+        Anzahl Teams: <input type="number" id="anzahlTeams" min="1">
+    </label>
+</div>
 
 <script>
     const input = document.getElementById('csvInput');
@@ -276,11 +346,7 @@
     const chevron = document.getElementById('chevron');
     const csvInput = document.getElementById('csvInput');
     const csvText = document.getElementById('csvText');
-
-    // Tabelle, Zaehler und CSV-Label initial als ausgeklappt markieren
-    table.classList.add('ausgeklappt');
-    anwesendZaehler.classList.add('ausgeklappt');
-    document.getElementById('csvLabel').classList.add('ausgeklappt');
+    const spielerListeInhalt = document.getElementById('spielerListeInhalt');
 
     function setModeClasses(mode) {
         // Set body class
@@ -340,27 +406,13 @@
     });
 
     titelToggle.addEventListener('click', () => {
-        const istEingeklappt = table.classList.contains('eingeklappt');
-
-        if (istEingeklappt) {
-            table.classList.remove('eingeklappt');
-            anwesendZaehler.classList.remove('eingeklappt');
-            document.getElementById('csvLabel').classList.remove('eingeklappt');
-
-            table.classList.add('ausgeklappt');
-            anwesendZaehler.classList.add('ausgeklappt');
-            document.getElementById('csvLabel').classList.add('ausgeklappt');
-
+        if (spielerListeInhalt.classList.contains('eingeklappt')) {
+            spielerListeInhalt.classList.remove('eingeklappt');
+            spielerListeInhalt.classList.add('ausgeklappt');
             chevron.classList.add('offen');
         } else {
-            table.classList.remove('ausgeklappt');
-            anwesendZaehler.classList.remove('ausgeklappt');
-            document.getElementById('csvLabel').classList.remove('ausgeklappt');
-
-            table.classList.add('eingeklappt');
-            anwesendZaehler.classList.add('eingeklappt');
-            document.getElementById('csvLabel').classList.add('eingeklappt');
-
+            spielerListeInhalt.classList.remove('ausgeklappt');
+            spielerListeInhalt.classList.add('eingeklappt');
             chevron.classList.remove('offen');
         }
     });
@@ -444,6 +496,54 @@
         };
 
         reader.readAsText(file);
+    });
+
+    // Einstellungen-Accordion
+    const einstellungenToggle = document.getElementById('einstellungenToggle');
+    const chevronEinstellungen = document.getElementById('chevronEinstellungen');
+    const einstellungenInhalt = document.getElementById('einstellungenInhalt');
+    const inputSpielerProTeam = document.getElementById('spielerProTeam');
+    const inputAnzahlTeams = document.getElementById('anzahlTeams');
+
+    // Einstellungen initial als ausgeklappt markieren (bereits im HTML)
+
+    einstellungenToggle.addEventListener('click', () => {
+        if (einstellungenInhalt.classList.contains('eingeklappt')) {
+            einstellungenInhalt.classList.remove('eingeklappt');
+            einstellungenInhalt.classList.add('ausgeklappt');
+            chevronEinstellungen.classList.add('offen');
+        } else {
+            einstellungenInhalt.classList.remove('ausgeklappt');
+            einstellungenInhalt.classList.add('eingeklappt');
+            chevronEinstellungen.classList.remove('offen');
+        }
+    });
+
+    // Logik für dimmen der anderen Eingabe und nur Zahlen zulassen
+    inputSpielerProTeam.addEventListener('input', () => {
+        // Nur Zahlen zulassen
+        inputSpielerProTeam.value = inputSpielerProTeam.value.replace(/\D/g, '');
+
+        if (inputSpielerProTeam.value) {
+            inputAnzahlTeams.classList.add('dimmed');
+            inputAnzahlTeams.value = '';
+            inputSpielerProTeam.classList.remove('dimmed');
+        } else {
+            inputAnzahlTeams.classList.remove('dimmed');
+        }
+    });
+
+    inputAnzahlTeams.addEventListener('input', () => {
+        // Nur Zahlen zulassen
+        inputAnzahlTeams.value = inputAnzahlTeams.value.replace(/\D/g, '');
+
+        if (inputAnzahlTeams.value) {
+            inputSpielerProTeam.classList.add('dimmed');
+            inputSpielerProTeam.value = '';
+            inputAnzahlTeams.classList.remove('dimmed');
+        } else {
+            inputSpielerProTeam.classList.remove('dimmed');
+        }
     });
 </script>
 
