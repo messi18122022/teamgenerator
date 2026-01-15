@@ -213,42 +213,36 @@
         .chevron.offen {
             transform: rotate(45deg);
         }
-    /* Animation fuer Ein- und Ausklappen der Tabelle */
+    /* Slide-Up/Down Animation nur für Inhalte, Titel bleiben sichtbar */
     #spielerTabelle,
     #anwesendZaehler,
-    #csvLabel {
-        overflow: hidden;
-        transition: max-height 0.35s ease, opacity 0.25s ease;
-    }
-
-    .eingeklappt {
-        max-height: 0 !important;
-        opacity: 0;
-        pointer-events: none;
-    }
-
-    .ausgeklappt {
-        max-height: 2000px;
-        opacity: 1;
-    }
-
+    #csvLabel,
     #einstellungenSection {
         overflow: hidden;
-        transition: max-height 0.35s ease, opacity 0.25s ease;
+        transition: max-height 0.4s ease, margin 0.4s ease, padding 0.4s ease;
         max-height: 2000px;
-        opacity: 1;
-        margin-bottom: 20px;
     }
 
-    #einstellungenSection.eingeklappt {
+    .inhalt {
+        transition: max-height 0.4s ease, margin 0.4s ease, padding 0.4s ease;
+        max-height: 2000px;
+        overflow: hidden;
+    }
+
+    .inhalt.eingeklappt {
         max-height: 0 !important;
-        opacity: 0;
+        margin: 0 !important;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
         pointer-events: none;
     }
 
-    #einstellungenSection.ausgeklappt {
+    .inhalt.ausgeklappt {
         max-height: 2000px;
-        opacity: 1;
+        margin: initial;
+        padding-top: initial;
+        padding-bottom: initial;
+        pointer-events: auto;
     }
 
     #einstellungenSection input {
@@ -291,33 +285,35 @@
     <span id="chevron" class="chevron geschlossen"></span>
     Spielerliste
 </h1>
-<label id="csvLabel">
-    <span id="csvIcon">📄</span>
-    <span id="csvText">Datei auswählen</span>
-    <input type="file" id="csvInput" accept=".csv" hidden>
-</label>
+<div id="spielerListeInhalt" class="inhalt ausgeklappt">
+    <label id="csvLabel">
+        <span id="csvIcon">📄</span>
+        <span id="csvText">Datei auswählen</span>
+        <input type="file" id="csvInput" accept=".csv" hidden>
+    </label>
 
-<table id="spielerTabelle" class="dark-mode">
-    <thead>
-        <tr>
-            <th class="anwesend-spalte dark-mode">Status</th>
-            <th class="dark-mode">Name</th>
-            <th class="dark-mode">Mannschaft</th>
-            <th class="dark-mode">Stärke</th>
-        </tr>
-    </thead>
-    <tbody>
-        <!-- Spieler werden hier eingefuegt -->
-    </tbody>
-</table>
+    <table id="spielerTabelle" class="dark-mode">
+        <thead>
+            <tr>
+                <th class="anwesend-spalte dark-mode">Status</th>
+                <th class="dark-mode">Name</th>
+                <th class="dark-mode">Mannschaft</th>
+                <th class="dark-mode">Stärke</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Spieler werden hier eingefuegt -->
+        </tbody>
+    </table>
 
-<p id="anwesendZaehler"><em>0 Spieler anwesend.</em></p>
+    <p id="anwesendZaehler"><em>0 Spieler anwesend.</em></p>
+</div>
 
 <h2 id="einstellungenToggle" style="cursor: pointer; user-select: none; display: flex; align-items: center; gap: 8px;">
     <span id="chevronEinstellungen" class="chevron geschlossen"></span>
     Einstellungen
 </h2>
-<div id="einstellungenSection">
+<div id="einstellungenInhalt" class="inhalt ausgeklappt">
     <label>
         Spieler pro Team: <input type="number" id="spielerProTeam" min="1">
     </label>
@@ -340,11 +336,7 @@
     const chevron = document.getElementById('chevron');
     const csvInput = document.getElementById('csvInput');
     const csvText = document.getElementById('csvText');
-
-    // Tabelle, Zaehler und CSV-Label initial als ausgeklappt markieren
-    table.classList.add('ausgeklappt');
-    anwesendZaehler.classList.add('ausgeklappt');
-    document.getElementById('csvLabel').classList.add('ausgeklappt');
+    const spielerListeInhalt = document.getElementById('spielerListeInhalt');
 
     function setModeClasses(mode) {
         // Set body class
@@ -404,27 +396,13 @@
     });
 
     titelToggle.addEventListener('click', () => {
-        const istEingeklappt = table.classList.contains('eingeklappt');
-
-        if (istEingeklappt) {
-            table.classList.remove('eingeklappt');
-            anwesendZaehler.classList.remove('eingeklappt');
-            document.getElementById('csvLabel').classList.remove('eingeklappt');
-
-            table.classList.add('ausgeklappt');
-            anwesendZaehler.classList.add('ausgeklappt');
-            document.getElementById('csvLabel').classList.add('ausgeklappt');
-
+        if (spielerListeInhalt.classList.contains('eingeklappt')) {
+            spielerListeInhalt.classList.remove('eingeklappt');
+            spielerListeInhalt.classList.add('ausgeklappt');
             chevron.classList.add('offen');
         } else {
-            table.classList.remove('ausgeklappt');
-            anwesendZaehler.classList.remove('ausgeklappt');
-            document.getElementById('csvLabel').classList.remove('ausgeklappt');
-
-            table.classList.add('eingeklappt');
-            anwesendZaehler.classList.add('eingeklappt');
-            document.getElementById('csvLabel').classList.add('eingeklappt');
-
+            spielerListeInhalt.classList.remove('ausgeklappt');
+            spielerListeInhalt.classList.add('eingeklappt');
             chevron.classList.remove('offen');
         }
     });
@@ -513,23 +491,20 @@
     // Einstellungen-Accordion
     const einstellungenToggle = document.getElementById('einstellungenToggle');
     const chevronEinstellungen = document.getElementById('chevronEinstellungen');
-    const einstellungenSection = document.getElementById('einstellungenSection');
+    const einstellungenInhalt = document.getElementById('einstellungenInhalt');
     const inputSpielerProTeam = document.getElementById('spielerProTeam');
     const inputAnzahlTeams = document.getElementById('anzahlTeams');
 
-    // Einstellungen initial als ausgeklappt markieren
-    einstellungenSection.classList.add('ausgeklappt');
+    // Einstellungen initial als ausgeklappt markieren (bereits im HTML)
 
     einstellungenToggle.addEventListener('click', () => {
-        const istEingeklappt = einstellungenSection.classList.contains('eingeklappt');
-
-        if (istEingeklappt) {
-            einstellungenSection.classList.remove('eingeklappt');
-            einstellungenSection.classList.add('ausgeklappt');
+        if (einstellungenInhalt.classList.contains('eingeklappt')) {
+            einstellungenInhalt.classList.remove('eingeklappt');
+            einstellungenInhalt.classList.add('ausgeklappt');
             chevronEinstellungen.classList.add('offen');
         } else {
-            einstellungenSection.classList.remove('ausgeklappt');
-            einstellungenSection.classList.add('eingeklappt');
+            einstellungenInhalt.classList.remove('ausgeklappt');
+            einstellungenInhalt.classList.add('eingeklappt');
             chevronEinstellungen.classList.remove('offen');
         }
     });
