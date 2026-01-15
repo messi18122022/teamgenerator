@@ -50,6 +50,17 @@
             margin-top: 5px;
             color: #b0b0b0;
         }
+
+        tr.abwesend {
+            opacity: 0.45;
+        }
+
+        th.anwesend-spalte,
+        td.anwesend-spalte {
+            width: 1%;
+            white-space: nowrap;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -61,6 +72,7 @@
 <table id="spielerTabelle">
     <thead>
         <tr>
+            <th class="anwesend-spalte">Anwesend</th>
             <th>Name</th>
             <th>Mannschaft</th>
             <th>Stärke</th>
@@ -70,11 +82,13 @@
         <!-- Spieler werden hier eingefuegt -->
     </tbody>
 </table>
+<p id="anwesendZaehler"><em>0 Spieler anwesend.</em></p>
 
 <script>
     const input = document.getElementById('csvInput');
     const status = document.getElementById('status');
     const tbody = document.querySelector('#spielerTabelle tbody');
+    const anwesendZaehler = document.getElementById('anwesendZaehler');
 
     input.addEventListener('change', () => {
         const file = input.files[0];
@@ -89,6 +103,26 @@
 
         reader.onload = event => {
             tbody.innerHTML = '';
+
+            function updateZaehler() {
+                const zeilen = tbody.querySelectorAll('tr');
+                let count = 0;
+
+                zeilen.forEach(zeile => {
+                    const checkbox = zeile.querySelector('input[type="checkbox"]');
+                    if (!checkbox) return;
+
+                    if (checkbox.checked) {
+                        count++;
+                        zeile.classList.remove('abwesend');
+                    } else {
+                        zeile.classList.add('abwesend');
+                    }
+                });
+
+                anwesendZaehler.innerHTML = '<em>' + count + ' Spieler anwesend.</em>';
+            }
+
             const text = event.target.result.trim();
             const zeilen = text.split('\n');
 
@@ -105,6 +139,15 @@
 
                 const tr = document.createElement('tr');
 
+                const tdCheckbox = document.createElement('td');
+                tdCheckbox.classList.add('anwesend-spalte');
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.checked = true;
+                checkbox.addEventListener('change', updateZaehler);
+                tdCheckbox.appendChild(checkbox);
+                tr.appendChild(tdCheckbox);
+
                 [name, mannschaft, staerke].forEach(wert => {
                     const td = document.createElement('td');
                     td.textContent = wert;
@@ -113,6 +156,8 @@
 
                 tbody.appendChild(tr);
             });
+
+            updateZaehler();
 
             status.textContent = 'Spielerliste geladen: ' + (zeilen.length) + ' Eintraege.';
         };
