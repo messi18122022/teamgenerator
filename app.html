@@ -200,14 +200,46 @@
         #csvIcon {
             font-size: 18px;
         }
+        .chevron {
+            width: 10px;
+            height: 10px;
+            border-right: 2px solid currentColor;
+            border-bottom: 2px solid currentColor;
+            transform: rotate(-45deg);
+            transition: transform 0.2s ease;
+            margin-left: 2px;
+        }
+
+        .chevron.offen {
+            transform: rotate(45deg);
+        }
+    /* Animation fuer Ein- und Ausklappen der Tabelle */
+    #spielerTabelle,
+    #anwesendZaehler,
+    #csvLabel {
+        overflow: hidden;
+        transition: max-height 0.35s ease, opacity 0.25s ease;
+    }
+
+    .eingeklappt {
+        max-height: 0 !important;
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    .ausgeklappt {
+        max-height: 2000px;
+        opacity: 1;
+    }
     </style>
 </head>
 <body class="dark-mode">
 
 <button id="darkModeToggle">Light Mode</button>
 
-<h1 class="dark-mode" id="titelToggle" style="cursor: pointer; user-select: none;">
-    <span id="pfeil">→</span> Spielerliste
+<h1 class="dark-mode" id="titelToggle" style="cursor: pointer; user-select: none; display: flex; align-items: center; gap: 8px;">
+    <span id="chevron" class="chevron geschlossen"></span>
+    Spielerliste
 </h1>
 <label id="csvLabel">
     <span id="csvIcon">📄</span>
@@ -241,9 +273,14 @@
     const theadThs = table.querySelectorAll('thead th');
     const anwesendZaehlerP = anwesendZaehler;
     const titelToggle = document.getElementById('titelToggle');
-    const pfeil = document.getElementById('pfeil');
+    const chevron = document.getElementById('chevron');
     const csvInput = document.getElementById('csvInput');
     const csvText = document.getElementById('csvText');
+
+    // Tabelle, Zaehler und CSV-Label initial als ausgeklappt markieren
+    table.classList.add('ausgeklappt');
+    anwesendZaehler.classList.add('ausgeklappt');
+    document.getElementById('csvLabel').classList.add('ausgeklappt');
 
     function setModeClasses(mode) {
         // Set body class
@@ -303,18 +340,28 @@
     });
 
     titelToggle.addEventListener('click', () => {
-        const istZu = table.style.display === 'none';
+        const istEingeklappt = table.classList.contains('eingeklappt');
 
-        if (istZu) {
-            table.style.display = '';
-            anwesendZaehler.style.display = '';
-            document.getElementById('csvLabel').style.display = '';
-            pfeil.textContent = '→';
+        if (istEingeklappt) {
+            table.classList.remove('eingeklappt');
+            anwesendZaehler.classList.remove('eingeklappt');
+            document.getElementById('csvLabel').classList.remove('eingeklappt');
+
+            table.classList.add('ausgeklappt');
+            anwesendZaehler.classList.add('ausgeklappt');
+            document.getElementById('csvLabel').classList.add('ausgeklappt');
+
+            chevron.classList.add('offen');
         } else {
-            table.style.display = 'none';
-            anwesendZaehler.style.display = 'none';
-            document.getElementById('csvLabel').style.display = 'none';
-            pfeil.textContent = '↓';
+            table.classList.remove('ausgeklappt');
+            anwesendZaehler.classList.remove('ausgeklappt');
+            document.getElementById('csvLabel').classList.remove('ausgeklappt');
+
+            table.classList.add('eingeklappt');
+            anwesendZaehler.classList.add('eingeklappt');
+            document.getElementById('csvLabel').classList.add('eingeklappt');
+
+            chevron.classList.remove('offen');
         }
     });
 
