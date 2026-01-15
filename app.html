@@ -28,10 +28,6 @@
             color: #000000;
         }
 
-        input[type="file"] {
-            margin-bottom: 10px;
-        }
-
         table.dark-mode {
             border-collapse: collapse;
             width: auto;
@@ -168,15 +164,56 @@
             background-color: #ddd;
             color: #000;
         }
+        #toggleListe {
+            margin-bottom: 10px;
+            padding: 6px 12px;
+            cursor: pointer;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        #csvLabel {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 16px;
+            margin-bottom: 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 15px;
+            user-select: none;
+            border: 1px solid;
+        }
+
+        body.dark-mode #csvLabel {
+            background-color: #1e1e1e;
+            border-color: #444;
+            color: #e0e0e0;
+        }
+
+        body.light-mode #csvLabel {
+            background-color: #f2f2f2;
+            border-color: #ccc;
+            color: #000000;
+        }
+
+        #csvIcon {
+            font-size: 18px;
+        }
     </style>
 </head>
 <body class="dark-mode">
 
 <button id="darkModeToggle">Light Mode</button>
 
-<h1 class="dark-mode">Spielerliste</h1>
-<input type="file" id="csvInput" accept=".csv">
-<p id="status" class="dark-mode"></p>
+<h1 class="dark-mode" id="titelToggle" style="cursor: pointer; user-select: none;">
+    <span id="pfeil">→</span> Spielerliste
+</h1>
+<label id="csvLabel">
+    <span id="csvIcon">📄</span>
+    <span id="csvText">Datei auswählen</span>
+    <input type="file" id="csvInput" accept=".csv" hidden>
+</label>
 
 <table id="spielerTabelle" class="dark-mode">
     <thead>
@@ -195,7 +232,6 @@
 
 <script>
     const input = document.getElementById('csvInput');
-    const status = document.getElementById('status');
     const tbody = document.querySelector('#spielerTabelle tbody');
     const anwesendZaehler = document.getElementById('anwesendZaehler');
     const darkModeToggle = document.getElementById('darkModeToggle');
@@ -204,6 +240,10 @@
     const table = document.getElementById('spielerTabelle');
     const theadThs = table.querySelectorAll('thead th');
     const anwesendZaehlerP = anwesendZaehler;
+    const titelToggle = document.getElementById('titelToggle');
+    const pfeil = document.getElementById('pfeil');
+    const csvInput = document.getElementById('csvInput');
+    const csvText = document.getElementById('csvText');
 
     function setModeClasses(mode) {
         // Set body class
@@ -214,9 +254,6 @@
 
         // Set table class
         table.className = mode;
-
-        // Set status class
-        status.className = mode;
 
         // Set thead th classes
         theadThs.forEach(th => {
@@ -265,12 +302,30 @@
         }
     });
 
+    titelToggle.addEventListener('click', () => {
+        const istZu = table.style.display === 'none';
+
+        if (istZu) {
+            table.style.display = '';
+            anwesendZaehler.style.display = '';
+            document.getElementById('csvLabel').style.display = '';
+            pfeil.textContent = '→';
+        } else {
+            table.style.display = 'none';
+            anwesendZaehler.style.display = 'none';
+            document.getElementById('csvLabel').style.display = 'none';
+            pfeil.textContent = '↓';
+        }
+    });
+
     input.addEventListener('change', () => {
         const file = input.files[0];
+        if (file) {
+            csvText.textContent = file.name;
+        }
         if (!file) return;
 
         if (!file.name.toLowerCase().endsWith('.csv')) {
-            status.textContent = 'Bitte eine CSV-Datei auswählen.';
             return;
         }
 
@@ -336,12 +391,9 @@
             });
 
             updateZaehler();
-
-            status.textContent = 'Spielerliste geladen: ' + (zeilen.length) + ' Einträge.';
         };
 
         reader.onerror = () => {
-            status.textContent = 'Fehler beim Lesen der Datei.';
         };
 
         reader.readAsText(file);
