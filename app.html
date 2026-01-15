@@ -22,15 +22,15 @@
 
         table {
             border-collapse: collapse;
-            width: 100%;
-            max-width: 800px;
+            width: auto;
             background-color: #1e1e1e;
         }
 
         th, td {
             border: 1px solid #333;
-            padding: 6px 10px;
+            padding: 6px 12px;
             text-align: left;
+            white-space: nowrap;
         }
 
         th {
@@ -50,6 +50,39 @@
             margin-top: 5px;
             color: #b0b0b0;
         }
+
+        tr.abwesend {
+            opacity: 0.2;
+        }
+
+        th.anwesend-spalte,
+        td.anwesend-spalte {
+            width: auto;
+            text-align: center;
+        }
+
+        td.anwesend-spalte {
+            padding-left: 18px;
+            padding-right: 18px;
+        }
+
+        td.anwesend-spalte input[type="checkbox"] {
+            transform: scaleX(1.6);
+            cursor: pointer;
+        }
+
+        td.anwesend-spalte {
+            cursor: pointer;
+            background-color: #1e1e1e;
+        }
+
+        tr.anwesend td.anwesend-spalte {
+            background-color: #2e7d32;
+        }
+
+        tr.abwesend td.anwesend-spalte {
+            background-color: #444;
+        }
     </style>
 </head>
 <body>
@@ -61,6 +94,7 @@
 <table id="spielerTabelle">
     <thead>
         <tr>
+            <th class="anwesend-spalte">Status</th>
             <th>Name</th>
             <th>Mannschaft</th>
             <th>Stärke</th>
@@ -70,11 +104,13 @@
         <!-- Spieler werden hier eingefuegt -->
     </tbody>
 </table>
+<p id="anwesendZaehler"><em>0 Spieler anwesend.</em></p>
 
 <script>
     const input = document.getElementById('csvInput');
     const status = document.getElementById('status');
     const tbody = document.querySelector('#spielerTabelle tbody');
+    const anwesendZaehler = document.getElementById('anwesendZaehler');
 
     input.addEventListener('change', () => {
         const file = input.files[0];
@@ -89,6 +125,23 @@
 
         reader.onload = event => {
             tbody.innerHTML = '';
+
+            function updateZaehler() {
+                const zeilen = tbody.querySelectorAll('tr');
+                let count = 0;
+
+                zeilen.forEach(zeile => {
+                    if (zeile.classList.contains('anwesend')) {
+                        count++;
+                        zeile.classList.remove('abwesend');
+                    } else {
+                        zeile.classList.add('abwesend');
+                    }
+                });
+
+                anwesendZaehler.innerHTML = '<em>' + count + ' Spieler anwesend.</em>';
+            }
+
             const text = event.target.result.trim();
             const zeilen = text.split('\n');
 
@@ -105,6 +158,18 @@
 
                 const tr = document.createElement('tr');
 
+                tr.classList.add('anwesend');
+
+                const tdStatus = document.createElement('td');
+                tdStatus.classList.add('anwesend-spalte');
+
+                tdStatus.addEventListener('click', () => {
+                    tr.classList.toggle('anwesend');
+                    updateZaehler();
+                });
+
+                tr.appendChild(tdStatus);
+
                 [name, mannschaft, staerke].forEach(wert => {
                     const td = document.createElement('td');
                     td.textContent = wert;
@@ -113,6 +178,8 @@
 
                 tbody.appendChild(tr);
             });
+
+            updateZaehler();
 
             status.textContent = 'Spielerliste geladen: ' + (zeilen.length) + ' Eintraege.';
         };
