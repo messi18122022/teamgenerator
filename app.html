@@ -245,36 +245,46 @@
         pointer-events: auto;
     }
 
-    #einstellungenSection input {
-        width: 80px;
-        padding: 6px 8px;
-        font-size: 14px;
-        border: 1px solid #888;
-        border-radius: 4px;
-        background-color: #f9f9f9;
-        color: #000;
-        outline: none;
-        transition: background-color 0.2s, border-color 0.2s;
-    }
+        /* Einheitliche Größe für alle Abschnittstitel */
+        h1#titelToggle,
+        h2#einstellungenToggle {
+            font-size: 20px;
+            font-weight: 600;
+        }
 
-    body.dark-mode #einstellungenSection input {
-        background-color: #1e1e1e;
-        color: #e0e0e0;
-        border: 1px solid #555;
-    }
+        /* Schöne Eingabefelder für Einstellungen */
+        #einstellungenInhalt input {
+            width: 100px;
+            padding: 8px 10px;
+            font-size: 14px;
+            border: 1px solid #888;
+            border-radius: 6px;
+            background-color: #f9f9f9;
+            color: #000;
+            outline: none;
+            transition: background-color 0.2s, border-color 0.2s, box-shadow 0.2s;
+        }
 
-    #einstellungenSection input:focus {
-        border-color: #2196f3;
-        background-color: #e3f2fd;
-    }
+        #einstellungenInhalt input:focus {
+            border-color: #2196f3;
+            box-shadow: 0 0 5px rgba(33, 150, 243, 0.5);
+            background-color: #e3f2fd;
+        }
 
-    body.dark-mode #einstellungenSection input:focus {
-        background-color: #2c3e50;
-    }
+        body.dark-mode #einstellungenInhalt input {
+            background-color: #1e1e1e;
+            color: #e0e0e0;
+            border: 1px solid #555;
+        }
 
-    #einstellungenSection input.dimmed {
-        opacity: 0.5;
-    }
+        body.dark-mode #einstellungenInhalt input:focus {
+            background-color: #2c3e50;
+            box-shadow: 0 0 5px rgba(33, 150, 243, 0.5);
+        }
+
+        #einstellungenInhalt input.dimmed {
+            opacity: 0.5;
+        }
     </style>
 </head>
 <body class="dark-mode">
