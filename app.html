@@ -4,100 +4,187 @@
     <meta charset="UTF-8">
     <title>Teamgenerator</title>
     <style>
-        body {
+        body.dark-mode {
             font-family: Arial, sans-serif;
             margin: 20px;
             background-color: #121212;
             color: #e0e0e0;
+            position: relative;
         }
 
-        h1 {
+        body.light-mode {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #ffffff;
+            color: #000000;
+            position: relative;
+        }
+
+        h1.dark-mode {
             color: #ffffff;
+        }
+
+        h1.light-mode {
+            color: #000000;
         }
 
         input[type="file"] {
             margin-bottom: 10px;
-            color: #e0e0e0;
         }
 
-        table {
+        table.dark-mode {
             border-collapse: collapse;
             width: auto;
             background-color: #1e1e1e;
         }
 
-        th, td {
+        table.light-mode {
+            border-collapse: collapse;
+            width: auto;
+            background-color: #f9f9f9;
+        }
+
+        th.dark-mode, td.dark-mode {
             border: 1px solid #333;
             padding: 6px 12px;
             text-align: left;
             white-space: nowrap;
+            color: #e0e0e0;
         }
 
-        th {
+        th.light-mode, td.light-mode {
+            border: 1px solid #ccc;
+            padding: 6px 12px;
+            text-align: left;
+            white-space: nowrap;
+            color: #000000;
+        }
+
+        th.dark-mode {
             background-color: #2a2a2a;
-            color: #ffffff;
         }
 
-        tr:nth-child(even) {
+        th.light-mode {
+            background-color: #e0e0e0;
+        }
+
+        tr.dark-mode:nth-child(even) {
             background-color: #1a1a1a;
         }
 
-        tr:nth-child(odd) {
+        tr.dark-mode:nth-child(odd) {
             background-color: #1e1e1e;
         }
 
-        #status {
+        tr.light-mode:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        tr.light-mode:nth-child(odd) {
+            background-color: #ffffff;
+        }
+
+        #status.dark-mode {
             margin-top: 5px;
             color: #b0b0b0;
+        }
+
+        #status.light-mode {
+            margin-top: 5px;
+            color: #505050;
         }
 
         tr.abwesend {
             opacity: 0.2;
         }
 
-        th.anwesend-spalte,
-        td.anwesend-spalte {
+        th.anwesend-spalte.dark-mode,
+        td.anwesend-spalte.dark-mode {
             width: auto;
             text-align: center;
         }
 
-        td.anwesend-spalte {
+        th.anwesend-spalte.light-mode,
+        td.anwesend-spalte.light-mode {
+            width: auto;
+            text-align: center;
+        }
+
+        td.anwesend-spalte.dark-mode {
             padding-left: 18px;
             padding-right: 18px;
-        }
-
-        td.anwesend-spalte input[type="checkbox"] {
-            transform: scaleX(1.6);
-            cursor: pointer;
-        }
-
-        td.anwesend-spalte {
             cursor: pointer;
             background-color: #1e1e1e;
         }
 
-        tr.anwesend td.anwesend-spalte {
+        td.anwesend-spalte.light-mode {
+            padding-left: 18px;
+            padding-right: 18px;
+            cursor: pointer;
+            background-color: #f9f9f9;
+        }
+
+        td.anwesend-spalte.dark-mode input[type="checkbox"] {
+            transform: scaleX(1.6);
+            cursor: pointer;
+        }
+
+        td.anwesend-spalte.light-mode input[type="checkbox"] {
+            transform: scaleX(1.6);
+            cursor: pointer;
+        }
+
+        tr.anwesend td.anwesend-spalte.dark-mode {
             background-color: #2e7d32;
         }
 
-        tr.abwesend td.anwesend-spalte {
+        tr.anwesend td.anwesend-spalte.light-mode {
+            background-color: #81c784;
+        }
+
+        tr.abwesend td.anwesend-spalte.dark-mode {
             background-color: #444;
+        }
+
+        tr.abwesend td.anwesend-spalte.light-mode {
+            background-color: #ccc;
+        }
+
+        #darkModeToggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 6px 12px;
+            cursor: pointer;
+            background-color: #444;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            z-index: 1000;
+        }
+
+        body.light-mode #darkModeToggle {
+            background-color: #ddd;
+            color: #000;
         }
     </style>
 </head>
-<body>
+<body class="dark-mode">
 
-<h1>Spielerliste</h1>
+<button id="darkModeToggle">Light Mode</button>
+
+<h1 class="dark-mode">Spielerliste</h1>
 <input type="file" id="csvInput" accept=".csv">
-<p id="status"></p>
+<p id="status" class="dark-mode"></p>
 
-<table id="spielerTabelle">
+<table id="spielerTabelle" class="dark-mode">
     <thead>
         <tr>
-            <th class="anwesend-spalte">Status</th>
-            <th>Name</th>
-            <th>Mannschaft</th>
-            <th>Stärke</th>
+            <th class="anwesend-spalte dark-mode">Status</th>
+            <th class="dark-mode">Name</th>
+            <th class="dark-mode">Mannschaft</th>
+            <th class="dark-mode">Stärke</th>
         </tr>
     </thead>
     <tbody>
@@ -111,6 +198,72 @@
     const status = document.getElementById('status');
     const tbody = document.querySelector('#spielerTabelle tbody');
     const anwesendZaehler = document.getElementById('anwesendZaehler');
+    const darkModeToggle = document.getElementById('darkModeToggle');
+    const body = document.body;
+    const h1 = document.querySelector('h1');
+    const table = document.getElementById('spielerTabelle');
+    const theadThs = table.querySelectorAll('thead th');
+    const anwesendZaehlerP = anwesendZaehler;
+
+    function setModeClasses(mode) {
+        // Set body class
+        body.className = mode;
+
+        // Set h1 class
+        h1.className = mode;
+
+        // Set table class
+        table.className = mode;
+
+        // Set status class
+        status.className = mode;
+
+        // Set thead th classes
+        theadThs.forEach(th => {
+            if (th.classList.contains('anwesend-spalte')) {
+                th.className = 'anwesend-spalte ' + mode;
+            } else {
+                th.className = mode;
+            }
+        });
+
+        // Set tbody tr and td classes
+        const rows = tbody.querySelectorAll('tr');
+        rows.forEach(tr => {
+            // Remove previous dark-mode/light-mode classes from tr and tds
+            tr.querySelectorAll('td').forEach(td => {
+                td.classList.remove('dark-mode', 'light-mode');
+            });
+            tr.classList.remove('dark-mode', 'light-mode');
+
+            // Add mode classes
+            tr.classList.add(mode);
+            tr.querySelectorAll('td').forEach(td => {
+                if (td.classList.contains('anwesend-spalte')) {
+                    td.classList.add(mode);
+                } else {
+                    td.classList.add(mode);
+                }
+            });
+        });
+
+        // Set anwesendZaehler color for light mode
+        if (mode === 'light-mode') {
+            anwesendZaehlerP.style.color = '#000000';
+        } else {
+            anwesendZaehlerP.style.color = '';
+        }
+    }
+
+    darkModeToggle.addEventListener('click', () => {
+        if (body.classList.contains('dark-mode')) {
+            setModeClasses('light-mode');
+            darkModeToggle.textContent = 'Dark Mode';
+        } else {
+            setModeClasses('dark-mode');
+            darkModeToggle.textContent = 'Light Mode';
+        }
+    });
 
     input.addEventListener('change', () => {
         const file = input.files[0];
@@ -159,9 +312,11 @@
                 const tr = document.createElement('tr');
 
                 tr.classList.add('anwesend');
+                tr.classList.add(body.className);
 
                 const tdStatus = document.createElement('td');
                 tdStatus.classList.add('anwesend-spalte');
+                tdStatus.classList.add(body.className);
 
                 tdStatus.addEventListener('click', () => {
                     tr.classList.toggle('anwesend');
@@ -173,6 +328,7 @@
                 [name, mannschaft, staerke].forEach(wert => {
                     const td = document.createElement('td');
                     td.textContent = wert;
+                    td.classList.add(body.className);
                     tr.appendChild(td);
                 });
 
@@ -181,7 +337,7 @@
 
             updateZaehler();
 
-            status.textContent = 'Spielerliste geladen: ' + (zeilen.length) + ' Eintraege.';
+            status.textContent = 'Spielerliste geladen: ' + (zeilen.length) + ' Einträge.';
         };
 
         reader.onerror = () => {
