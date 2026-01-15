@@ -231,6 +231,56 @@
         max-height: 2000px;
         opacity: 1;
     }
+
+    #einstellungenSection {
+        overflow: hidden;
+        transition: max-height 0.35s ease, opacity 0.25s ease;
+        max-height: 2000px;
+        opacity: 1;
+        margin-bottom: 20px;
+    }
+
+    #einstellungenSection.eingeklappt {
+        max-height: 0 !important;
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    #einstellungenSection.ausgeklappt {
+        max-height: 2000px;
+        opacity: 1;
+    }
+
+    #einstellungenSection input {
+        width: 80px;
+        padding: 6px 8px;
+        font-size: 14px;
+        border: 1px solid #888;
+        border-radius: 4px;
+        background-color: #f9f9f9;
+        color: #000;
+        outline: none;
+        transition: background-color 0.2s, border-color 0.2s;
+    }
+
+    body.dark-mode #einstellungenSection input {
+        background-color: #1e1e1e;
+        color: #e0e0e0;
+        border: 1px solid #555;
+    }
+
+    #einstellungenSection input:focus {
+        border-color: #2196f3;
+        background-color: #e3f2fd;
+    }
+
+    body.dark-mode #einstellungenSection input:focus {
+        background-color: #2c3e50;
+    }
+
+    #einstellungenSection input.dimmed {
+        opacity: 0.5;
+    }
     </style>
 </head>
 <body class="dark-mode">
@@ -260,7 +310,21 @@
         <!-- Spieler werden hier eingefuegt -->
     </tbody>
 </table>
+
 <p id="anwesendZaehler"><em>0 Spieler anwesend.</em></p>
+
+<h2 id="einstellungenToggle" style="cursor: pointer; user-select: none; display: flex; align-items: center; gap: 8px;">
+    <span id="chevronEinstellungen" class="chevron geschlossen"></span>
+    Einstellungen
+</h2>
+<div id="einstellungenSection">
+    <label>
+        Spieler pro Team: <input type="number" id="spielerProTeam" min="1">
+    </label>
+    <label>
+        Anzahl Teams: <input type="number" id="anzahlTeams" min="1">
+    </label>
+</div>
 
 <script>
     const input = document.getElementById('csvInput');
@@ -444,6 +508,57 @@
         };
 
         reader.readAsText(file);
+    });
+
+    // Einstellungen-Accordion
+    const einstellungenToggle = document.getElementById('einstellungenToggle');
+    const chevronEinstellungen = document.getElementById('chevronEinstellungen');
+    const einstellungenSection = document.getElementById('einstellungenSection');
+    const inputSpielerProTeam = document.getElementById('spielerProTeam');
+    const inputAnzahlTeams = document.getElementById('anzahlTeams');
+
+    // Einstellungen initial als ausgeklappt markieren
+    einstellungenSection.classList.add('ausgeklappt');
+
+    einstellungenToggle.addEventListener('click', () => {
+        const istEingeklappt = einstellungenSection.classList.contains('eingeklappt');
+
+        if (istEingeklappt) {
+            einstellungenSection.classList.remove('eingeklappt');
+            einstellungenSection.classList.add('ausgeklappt');
+            chevronEinstellungen.classList.add('offen');
+        } else {
+            einstellungenSection.classList.remove('ausgeklappt');
+            einstellungenSection.classList.add('eingeklappt');
+            chevronEinstellungen.classList.remove('offen');
+        }
+    });
+
+    // Logik für dimmen der anderen Eingabe und nur Zahlen zulassen
+    inputSpielerProTeam.addEventListener('input', () => {
+        // Nur Zahlen zulassen
+        inputSpielerProTeam.value = inputSpielerProTeam.value.replace(/\D/g, '');
+
+        if (inputSpielerProTeam.value) {
+            inputAnzahlTeams.classList.add('dimmed');
+            inputAnzahlTeams.value = '';
+            inputSpielerProTeam.classList.remove('dimmed');
+        } else {
+            inputAnzahlTeams.classList.remove('dimmed');
+        }
+    });
+
+    inputAnzahlTeams.addEventListener('input', () => {
+        // Nur Zahlen zulassen
+        inputAnzahlTeams.value = inputAnzahlTeams.value.replace(/\D/g, '');
+
+        if (inputAnzahlTeams.value) {
+            inputSpielerProTeam.classList.add('dimmed');
+            inputSpielerProTeam.value = '';
+            inputAnzahlTeams.classList.remove('dimmed');
+        } else {
+            inputSpielerProTeam.classList.remove('dimmed');
+        }
     });
 </script>
 
