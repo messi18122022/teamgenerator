@@ -850,6 +850,7 @@ function createNewTeamPlaceholder() {
         placeholder.textContent = '+';
         teamsOutput.appendChild(placeholder);
 
+        // Drag & Drop EventListener für den Placeholder
         placeholder.addEventListener('dragover', e => e.preventDefault());
         placeholder.addEventListener('dragenter', e => placeholder.style.backgroundColor = 'rgba(33,150,243,0.1)');
         placeholder.addEventListener('dragleave', e => placeholder.style.backgroundColor = '');
@@ -859,7 +860,7 @@ function createNewTeamPlaceholder() {
             if (!dragged) return;
             placeholder.style.backgroundColor = '';
 
-            // Neues Team erstellen
+            // Neues Team erstellen mit dem gezogenen Spieler
             const table = document.createElement('table');
             table.className = body.className;
 
@@ -892,7 +893,75 @@ function createNewTeamPlaceholder() {
             table.appendChild(tbodyTeam);
             teamsOutput.insertBefore(table, placeholder);
 
-            updateTeamAvg(table);
+            // Drop-Ereignisse für die neue Tabelle registrieren
+            table.addEventListener('dragover', e => e.preventDefault());
+            table.addEventListener('drop', e => {
+                e.preventDefault();
+                const draggedRow = window.draggedRow;
+                if (!draggedRow) return;
+                const tbody = table.querySelector('tbody');
+                const avgRow = Array.from(tbody.querySelectorAll('tr')).find(r => r.querySelector('em'));
+                tbody.insertBefore(draggedRow, avgRow);
+                updateTeamAvg(table);
+
+                // Prüfen, ob das Quellteam leer ist und ggf. löschen
+                document.querySelectorAll('#teamsOutput table').forEach(tbl => {
+                    const tBodyCheck = tbl.querySelector('tbody');
+                    const rows = Array.from(tBodyCheck.querySelectorAll('tr')).filter(r => !r.querySelector('em'));
+                    if (rows.length === 0) tbl.remove();
+                });
+            });
+
+            makeRowsDraggable();
+        });
+
+        // Klick-Listener für leeres Team
+        placeholder.addEventListener('click', () => {
+            const table = document.createElement('table');
+            table.className = body.className;
+
+            const thead = document.createElement('thead');
+            const trh = document.createElement('tr');
+            const th = document.createElement('th');
+            th.colSpan = 3;
+            th.textContent = 'Team ' + (teamsOutput.querySelectorAll('table').length + 1);
+            th.className = body.className;
+            trh.appendChild(th);
+            thead.appendChild(trh);
+            table.appendChild(thead);
+
+            const tbodyTeam = document.createElement('tbody');
+
+            const avgRow = document.createElement('tr');
+            const avgTd = document.createElement('td');
+            avgTd.colSpan = 3;
+            avgTd.innerHTML = '<em>Durchschnittsstärke: 0.00</em>';
+            avgTd.className = body.className;
+            avgRow.appendChild(avgTd);
+            tbodyTeam.appendChild(avgRow);
+
+            table.appendChild(tbodyTeam);
+            teamsOutput.insertBefore(table, placeholder);
+
+            // Drop-Ereignisse für die neue Tabelle registrieren
+            table.addEventListener('dragover', e => e.preventDefault());
+            table.addEventListener('drop', e => {
+                e.preventDefault();
+                const draggedRow = window.draggedRow;
+                if (!draggedRow) return;
+                const tbody = table.querySelector('tbody');
+                const avgRow = Array.from(tbody.querySelectorAll('tr')).find(r => r.querySelector('em'));
+                tbody.insertBefore(draggedRow, avgRow);
+                updateTeamAvg(table);
+
+                // Prüfen, ob das Quellteam leer ist und ggf. löschen
+                document.querySelectorAll('#teamsOutput table').forEach(tbl => {
+                    const tBodyCheck = tbl.querySelector('tbody');
+                    const rows = Array.from(tBodyCheck.querySelectorAll('tr')).filter(r => !r.querySelector('em'));
+                    if (rows.length === 0) tbl.remove();
+                });
+            });
+
             makeRowsDraggable();
         });
     }
