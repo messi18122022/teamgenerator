@@ -740,9 +740,11 @@ function updateTeamAvg(table) {
 }
 
 function makeRowsDraggable() {
-    const allRows = document.querySelectorAll('#teamsOutput tr');
+    // Nur Spielerzeilen im tbody draggable machen, nicht Kopfzeilen (th)
+    const allRows = document.querySelectorAll('#teamsOutput tbody tr');
     allRows.forEach(tr => {
-        if (tr.querySelector('em')) return; // Durchschnittszeile nicht draggable
+        // Durchschnittszeile (mit <em>) nicht draggable machen
+        if (tr.querySelector('em')) return;
         tr.setAttribute('draggable', 'true');
 
         tr.addEventListener('dragstart', e => {
@@ -815,13 +817,93 @@ function makeRowsDraggable() {
             const avgRow = Array.from(tbody.querySelectorAll('tr')).find(r => r.querySelector('em'));
             tbody.insertBefore(dragged, avgRow);
             updateTeamAvg(tbody.closest('table'));
+
+            // Prüfen, ob das Quellteam leer ist (nur noch avgRow) und löschen
+            document.querySelectorAll('#teamsOutput table').forEach(tbl => {
+                const tBodyCheck = tbl.querySelector('tbody');
+                const rows = Array.from(tBodyCheck.querySelectorAll('tr')).filter(tr => !tr.querySelector('em'));
+                if (rows.length === 0) {
+                    tbl.remove();
+                }
+            });
         });
     });
 }
 
+// --- Neues Team-Placeholder für Drag&Drop hinzufügen ---
+function createNewTeamPlaceholder() {
+    let placeholder = document.getElementById('newTeamPlaceholder');
+    if (!placeholder) {
+        placeholder = document.createElement('div');
+        placeholder.id = 'newTeamPlaceholder';
+        placeholder.style.display = 'flex';
+        placeholder.style.flexDirection = 'column';
+        placeholder.style.alignItems = 'center';
+        placeholder.style.justifyContent = 'center';
+        placeholder.style.width = '150px';
+        placeholder.style.height = '50px';
+        placeholder.style.border = '2px dashed #2196f3';
+        placeholder.style.marginTop = '15px';
+        placeholder.style.cursor = 'pointer';
+        placeholder.style.color = '#2196f3';
+        placeholder.style.fontSize = '24px';
+        placeholder.textContent = '+';
+        teamsOutput.appendChild(placeholder);
+
+        placeholder.addEventListener('dragover', e => e.preventDefault());
+        placeholder.addEventListener('dragenter', e => placeholder.style.backgroundColor = 'rgba(33,150,243,0.1)');
+        placeholder.addEventListener('dragleave', e => placeholder.style.backgroundColor = '');
+        placeholder.addEventListener('drop', e => {
+            e.preventDefault();
+            const dragged = window.draggedRow;
+            if (!dragged) return;
+            placeholder.style.backgroundColor = '';
+
+            // Neues Team erstellen
+            const table = document.createElement('table');
+            table.className = body.className;
+
+            const thead = document.createElement('thead');
+            const trh = document.createElement('tr');
+            const th = document.createElement('th');
+            th.colSpan = 3;
+            th.textContent = 'Team ' + (teamsOutput.querySelectorAll('table').length + 1);
+            th.className = body.className;
+            trh.appendChild(th);
+            thead.appendChild(trh);
+            table.appendChild(thead);
+
+            const tbodyTeam = document.createElement('tbody');
+
+            const tr = dragged;
+            const oldTbody = tr.parentNode;
+            oldTbody.removeChild(tr);
+
+            tbodyTeam.appendChild(tr);
+
+            const avgRow = document.createElement('tr');
+            const avgTd = document.createElement('td');
+            avgTd.colSpan = 3;
+            avgTd.innerHTML = '<em>Durchschnittsstärke: ' + parseInt(tr.children[2].textContent,10) + '</em>';
+            avgTd.className = body.className;
+            avgRow.appendChild(avgTd);
+            tbodyTeam.appendChild(avgRow);
+
+            table.appendChild(tbodyTeam);
+            teamsOutput.insertBefore(table, placeholder);
+
+            updateTeamAvg(table);
+            makeRowsDraggable();
+        });
+    }
+}
+
 // Nach jedem Generieren der Teams:
 teamsBtn.addEventListener('click', () => {
-    setTimeout(() => makeRowsDraggable(), 50);
+    setTimeout(() => {
+        makeRowsDraggable();
+        createNewTeamPlaceholder();
+    }, 50);
 });
 </script>
 </body>
