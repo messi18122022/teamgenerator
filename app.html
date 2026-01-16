@@ -332,6 +332,15 @@
     </label>
 </div>
 
+<h2 id="teamsToggle" style="cursor: pointer; user-select: none; display: flex; align-items: center; gap: 8px;">
+    <span id="chevronTeams" class="chevron geschlossen"></span>
+    Teams generieren
+</h2>
+<div id="teamsInhalt" class="inhalt ausgeklappt">
+    <button id="teamsGenerierenBtn">Teams generieren</button>
+    <div id="teamsOutput" style="display: flex; gap: 20px; margin-top: 15px; flex-wrap: wrap;"></div>
+</div>
+
 <script>
     const input = document.getElementById('csvInput');
     const tbody = document.querySelector('#spielerTabelle tbody');
@@ -519,33 +528,115 @@
         }
     });
 
-    // Logik für dimmen der anderen Eingabe und nur Zahlen zulassen
-    inputSpielerProTeam.addEventListener('input', () => {
-        // Nur Zahlen zulassen
-        inputSpielerProTeam.value = inputSpielerProTeam.value.replace(/\D/g, '');
+    // Teams-Accordion
+    const teamsToggle = document.getElementById('teamsToggle');
+    const chevronTeams = document.getElementById('chevronTeams');
+    const teamsInhalt = document.getElementById('teamsInhalt');
+    const teamsBtn = document.getElementById('teamsGenerierenBtn');
+    const teamsOutput = document.getElementById('teamsOutput');
 
-        if (inputSpielerProTeam.value) {
-            inputAnzahlTeams.classList.add('dimmed');
-            inputAnzahlTeams.value = '';
-            inputSpielerProTeam.classList.remove('dimmed');
+    teamsToggle.addEventListener('click', () => {
+        if (teamsInhalt.classList.contains('eingeklappt')) {
+            teamsInhalt.classList.remove('eingeklappt');
+            teamsInhalt.classList.add('ausgeklappt');
+            chevronTeams.classList.add('offen');
         } else {
-            inputAnzahlTeams.classList.remove('dimmed');
+            teamsInhalt.classList.remove('ausgeklappt');
+            teamsInhalt.classList.add('eingeklappt');
+            chevronTeams.classList.remove('offen');
         }
     });
 
-    inputAnzahlTeams.addEventListener('input', () => {
-        // Nur Zahlen zulassen
-        inputAnzahlTeams.value = inputAnzahlTeams.value.replace(/\D/g, '');
+    teamsBtn.addEventListener('click', () => {
+        teamsOutput.innerHTML = '';
 
-        if (inputAnzahlTeams.value) {
-            inputSpielerProTeam.classList.add('dimmed');
-            inputSpielerProTeam.value = '';
-            inputAnzahlTeams.classList.remove('dimmed');
-        } else {
-            inputSpielerProTeam.classList.remove('dimmed');
+        const spieler = [];
+        tbody.querySelectorAll('tr.anwesend').forEach(tr => {
+            const tds = tr.querySelectorAll('td');
+            spieler.push({
+                name: tds[1].textContent,
+                mannschaft: tds[2].textContent,
+                staerke: parseInt(tds[3].textContent, 10)
+            });
+        });
+
+        if (spieler.length === 0) {
+            teamsOutput.innerHTML = '<em>Keine anwesenden Spieler.</em>';
+            return;
         }
+
+        const spielerProTeam = parseInt(inputSpielerProTeam.value, 10);
+        const anzahlTeams = parseInt(inputAnzahlTeams.value, 10);
+
+        let teams = [];
+
+        if (anzahlTeams) {
+            for (let i = 0; i < anzahlTeams; i++) teams.push([]);
+        } else if (spielerProTeam) {
+            const teamCount = Math.ceil(spieler.length / spielerProTeam);
+            for (let i = 0; i < teamCount; i++) teams.push([]);
+        } else {
+            teamsOutput.innerHTML = '<em>Bitte Einstellungen setzen.</em>';
+            return;
+        }
+
+        spieler.sort((a, b) => {
+            if (a.mannschaft === b.mannschaft) {
+                return b.staerke - a.staerke;
+            }
+            return b.mannschaft.localeCompare(a.mannschaft, 'de');
+        });
+
+        let teamIndex = 0;
+        spieler.forEach(sp => {
+            teams[teamIndex].push(sp);
+            teamIndex = (teamIndex + 1) % teams.length;
+        });
+
+        teams.forEach((team, index) => {
+            const table = document.createElement('table');
+            table.className = body.className;
+
+            const thead = document.createElement('thead');
+            const trh = document.createElement('tr');
+            const th = document.createElement('th');
+            th.colSpan = 3;
+            th.textContent = 'Team ' + (index + 1);
+            th.className = body.className;
+            trh.appendChild(th);
+            thead.appendChild(trh);
+            table.appendChild(thead);
+
+            const tbodyTeam = document.createElement('tbody');
+            let sumStaerke = 0;
+
+            team.forEach(sp => {
+                sumStaerke += sp.staerke;
+                const tr = document.createElement('tr');
+                tr.className = body.className;
+
+                [sp.name, sp.mannschaft, sp.staerke].forEach(val => {
+                    const td = document.createElement('td');
+                    td.textContent = val;
+                    td.className = body.className;
+                    tr.appendChild(td);
+                });
+
+                tbodyTeam.appendChild(tr);
+            });
+
+            const avgRow = document.createElement('tr');
+            const avgTd = document.createElement('td');
+            avgTd.colSpan = 3;
+            avgTd.innerHTML = '<em>Durchschnittsstärke: ' + (sumStaerke / team.length).toFixed(2) + '</em>';
+            avgTd.className = body.className;
+            avgRow.appendChild(avgTd);
+            tbodyTeam.appendChild(avgRow);
+
+            table.appendChild(tbodyTeam);
+            teamsOutput.appendChild(table);
+        });
     });
 </script>
-
 </body>
 </html>
