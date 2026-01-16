@@ -573,25 +573,97 @@
         if (anzahlTeams) {
             for (let i = 0; i < anzahlTeams; i++) teams.push([]);
         } else if (spielerProTeam) {
-            const teamCount = Math.ceil(spieler.length / spielerProTeam);
+            // spielerProTeam ist MINDESTANZAHL
+            const min = spielerProTeam;
+            const max = spielerProTeam + 1;
+
+            // Anzahl Teams so berechnen, dass niemand unter dem Minimum ist
+            const teamCount = Math.floor(spieler.length / min);
+
+            if (teamCount === 0) {
+                teamsOutput.innerHTML = '<em>Zu wenige Spieler für diese Einstellung.</em>';
+                return;
+            }
+
             for (let i = 0; i < teamCount; i++) teams.push([]);
         } else {
             teamsOutput.innerHTML = '<em>Bitte Einstellungen setzen.</em>';
             return;
         }
 
-        spieler.sort((a, b) => {
-            if (a.mannschaft === b.mannschaft) {
-                return b.staerke - a.staerke;
-            }
-            return b.mannschaft.localeCompare(a.mannschaft, 'de');
+        // === HÖCHSTE PRIORITÄT: Mannschaften trennen ===
+
+        // Spieler nach Altersstufe gruppieren
+        const gruppen = {};
+        spieler.forEach(sp => {
+            if (!gruppen[sp.mannschaft]) gruppen[sp.mannschaft] = [];
+            gruppen[sp.mannschaft].push(sp);
         });
 
-        let teamIndex = 0;
-        spieler.forEach(sp => {
-            teams[teamIndex].push(sp);
-            teamIndex = (teamIndex + 1) % teams.length;
+        // Altersstufen numerisch sortieren (älter zuerst)
+        const altersstufen = Object.keys(gruppen).sort((a, b) => {
+            return parseInt(b.replace(/\D/g, ''), 10) - parseInt(a.replace(/\D/g, ''), 10);
         });
+
+        let teamCursor = 0;
+
+        altersstufen.forEach((stufe, index) => {
+            const gruppe = gruppen[stufe].sort((a, b) => b.staerke - a.staerke);
+
+            // Wie viele Teams sollen diese Altersstufe primär füllen?
+            const anteil = Math.round((gruppe.length / spieler.length) * teams.length) || 1;
+            const zielTeams = teams.slice(teamCursor, teamCursor + anteil);
+
+            // Falls nicht genug freie Teams übrig sind
+            const verwendeteTeams = zielTeams.length > 0 ? zielTeams : teams;
+
+            let i = 0;
+            gruppe.forEach(sp => {
+                verwendeteTeams[i % verwendeteTeams.length].push(sp);
+                i++;
+            });
+
+            teamCursor += verwendeteTeams.length;
+        });
+
+        // === NUR FALLS LEERE TEAMS EXISTIEREN: mit nächstjüngerer Altersstufe auffüllen ===
+        teams.forEach((team, idx) => {
+            if (team.length > 0) return;
+
+            // nächstgelegene Altersstufe suchen
+            const alleSpieler = teams.flat();
+            const kandidaten = alleSpieler.filter(sp => {
+                const alter = parseInt(sp.mannschaft.replace(/\D/g, ''), 10);
+                return Math.abs(alter - parseInt(altersstufen[0].replace(/\D/g, ''), 10)) <= 1;
+            });
+
+            if (kandidaten.length > 0) {
+                team.push(kandidaten.pop());
+            }
+        });
+
+        // === GLOBALE TEAMGROESSEN-REGEL ===
+        if (spielerProTeam) {
+            const min = spielerProTeam;
+            const max = spielerProTeam + 1;
+
+            let changed = true;
+
+            // Solange es Teams mit > max und Teams mit < min gibt, ausgleichen
+            while (changed) {
+                changed = false;
+
+                const zuGross = teams.find(t => t.length > max);
+                const zuKlein = teams.find(t => t.length < min);
+
+                if (zuGross && zuKlein) {
+                    // Spieler vom groessten Team ins kleinste verschieben
+                    const spielerVerschieben = zuGross.pop();
+                    zuKlein.push(spielerVerschieben);
+                    changed = true;
+                }
+            }
+        }
 
         teams.forEach((team, index) => {
             const table = document.createElement('table');
