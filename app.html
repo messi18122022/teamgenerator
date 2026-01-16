@@ -710,5 +710,97 @@
         });
     });
 </script>
+<script>
+function updateTeamAvg(table) {
+    const rows = Array.from(table.querySelectorAll('tbody tr')).filter(tr => !tr.querySelector('em'));
+    if (rows.length === 0) return;
+
+    let sum = 0;
+    rows.forEach(tr => {
+        const staerke = parseInt(tr.children[2].textContent, 10);
+        sum += staerke;
+    });
+
+    let avgRow = Array.from(table.querySelectorAll('tbody tr')).find(tr => tr.querySelector('em'));
+    if (!avgRow) {
+        avgRow = document.createElement('tr');
+        const td = document.createElement('td');
+        td.colSpan = 3;
+        td.innerHTML = '';
+        avgRow.appendChild(td);
+        avgRow.className = body.className;
+        table.querySelector('tbody').appendChild(avgRow);
+    }
+
+    avgRow.querySelector('td').innerHTML = '<em>Durchschnittsstärke: ' + (sum / rows.length).toFixed(2) + '</em>';
+}
+
+function makeRowsDraggable() {
+    const allRows = document.querySelectorAll('#teamsOutput tr');
+    allRows.forEach(tr => {
+        if (tr.querySelector('em')) return; // Durchschnittszeile nicht draggable
+        tr.setAttribute('draggable', 'true');
+
+        tr.addEventListener('dragstart', e => {
+            e.dataTransfer.setData('text/plain', '');
+            tr.classList.add('dragging');
+            window.draggedRow = tr;
+
+            // Ganze Zeile als Drag-Image verwenden
+            const rect = tr.getBoundingClientRect();
+            const clone = tr.cloneNode(true);
+            clone.style.position = 'absolute';
+            clone.style.top = '-9999px';
+            document.body.appendChild(clone);
+            e.dataTransfer.setDragImage(clone, rect.width / 2, rect.height / 2);
+            setTimeout(() => document.body.removeChild(clone), 0);
+        });
+
+        tr.addEventListener('dragend', () => {
+            tr.classList.remove('dragging');
+            window.draggedRow = null;
+        });
+
+        tr.addEventListener('dragover', e => {
+            e.preventDefault();
+        });
+
+        tr.addEventListener('drop', e => {
+            e.preventDefault();
+            const dragged = window.draggedRow;
+            if (!dragged || dragged === tr) return;
+
+            const tbody = tr.parentNode;
+
+            // Durchschnittszeile am Ende
+            const avgRow = Array.from(tbody.querySelectorAll('tr')).find(r => r.querySelector('em'));
+
+            // Zeile vor die Durchschnittszeile einfügen
+            tbody.insertBefore(dragged, avgRow);
+            updateTeamAvg(tbody.closest('table'));
+        });
+    });
+
+    const tables = document.querySelectorAll('#teamsOutput table');
+    tables.forEach(table => {
+        table.addEventListener('dragover', e => e.preventDefault());
+        table.addEventListener('drop', e => {
+            e.preventDefault();
+            const dragged = window.draggedRow;
+            if (!dragged) return;
+
+            const tbody = table.querySelector('tbody');
+            const avgRow = Array.from(tbody.querySelectorAll('tr')).find(r => r.querySelector('em'));
+            tbody.insertBefore(dragged, avgRow);
+            updateTeamAvg(tbody.closest('table'));
+        });
+    });
+}
+
+// Nach jedem Generieren der Teams:
+teamsBtn.addEventListener('click', () => {
+    setTimeout(() => makeRowsDraggable(), 50);
+});
+</script>
 </body>
 </html>
