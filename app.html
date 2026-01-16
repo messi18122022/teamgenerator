@@ -285,6 +285,10 @@
         #einstellungenInhalt input.dimmed {
             opacity: 0.5;
         }
+    .drop-target {
+        outline: 2px dashed #2196f3;
+        background-color: rgba(33, 150, 243, 0.1);
+    }
     </style>
 </head>
 <body class="dark-mode">
@@ -758,11 +762,19 @@ function makeRowsDraggable() {
 
         tr.addEventListener('dragend', () => {
             tr.classList.remove('dragging');
+            document.querySelectorAll('.drop-target').forEach(el => el.classList.remove('drop-target'));
             window.draggedRow = null;
         });
 
         tr.addEventListener('dragover', e => {
             e.preventDefault();
+            const dragged = window.draggedRow;
+            if (!dragged || dragged === tr || tr.querySelector('em')) return;
+            tr.classList.add('drop-target');
+        });
+
+        tr.addEventListener('dragleave', e => {
+            tr.classList.remove('drop-target');
         });
 
         tr.addEventListener('drop', e => {
@@ -770,14 +782,24 @@ function makeRowsDraggable() {
             const dragged = window.draggedRow;
             if (!dragged || dragged === tr) return;
 
-            const tbody = tr.parentNode;
+            const sourceTable = dragged.closest('table').querySelector('tbody');
+            const targetTable = tr.closest('table').querySelector('tbody');
 
-            // Durchschnittszeile am Ende
-            const avgRow = Array.from(tbody.querySelectorAll('tr')).find(r => r.querySelector('em'));
+            const avgRowSource = Array.from(sourceTable.querySelectorAll('tr')).find(r => r.querySelector('em'));
+            const avgRowTarget = Array.from(targetTable.querySelectorAll('tr')).find(r => r.querySelector('em'));
 
-            // Zeile vor die Durchschnittszeile einfügen
-            tbody.insertBefore(dragged, avgRow);
-            updateTeamAvg(tbody.closest('table'));
+            // Spieler aus den jeweiligen Tabellen entfernen
+            sourceTable.removeChild(dragged);
+            targetTable.removeChild(tr);
+
+            // Spieler in die andere Tabelle einfügen, vor Durchschnittszeile
+            sourceTable.insertBefore(tr, avgRowSource);
+            targetTable.insertBefore(dragged, avgRowTarget);
+
+            tr.classList.remove('drop-target');
+
+            updateTeamAvg(sourceTable.closest('table'));
+            updateTeamAvg(targetTable.closest('table'));
         });
     });
 
