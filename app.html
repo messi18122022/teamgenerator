@@ -349,6 +349,7 @@
         <span id="csvText">Datei auswählen</span>
         <input type="file" id="csvInput" accept=".xlsx" hidden>
     </label>
+    <div id="mannschaftButtonsContainer" style="margin-bottom: 10px; display: flex; gap: 10px; flex-wrap: wrap;"></div>
 
     <table id="spielerTabelle" class="dark-mode" style="display: none;">
         <thead>
@@ -560,6 +561,51 @@
             });
 
             updateZaehler();
+
+            // Mannschaften-Buttons erstellen
+            const mannschaftButtonsContainer = document.getElementById('mannschaftButtonsContainer');
+
+            // Mannschaften ermitteln
+            const mannschaftenSet = new Set();
+            rows.forEach(spalten => {
+                if (spalten.length < 3) return;
+                const mannschaft = String(spalten[2]).trim();
+                mannschaftenSet.add(mannschaft);
+            });
+
+            // Buttons erstellen
+            mannschaftButtonsContainer.innerHTML = ''; // vorherige Buttons löschen
+            mannschaftenSet.forEach(mannschaft => {
+                const btn = document.createElement('button');
+                btn.textContent = mannschaft;
+                btn.className = 'action-button';
+                btn.style.fontSize = '13px';
+                btn.addEventListener('click', () => {
+                    // Alle Spieler dieser Mannschaft finden
+                    const spielerRows = Array.from(tbody.querySelectorAll('tr')).filter(tr => {
+                        return tr.children[2].textContent === mannschaft;
+                    });
+
+                    if (spielerRows.length === 0) return;
+
+                    // Prüfen, ob alle abwesend sind
+                    const alleAbwesend = spielerRows.every(tr => tr.classList.contains('abwesend'));
+
+                    spielerRows.forEach(tr => {
+                        if (alleAbwesend) {
+                            tr.classList.add('anwesend');
+                            tr.classList.remove('abwesend');
+                        } else {
+                            tr.classList.add('abwesend');
+                            tr.classList.remove('anwesend');
+                        }
+                    });
+
+                    updateZaehler();
+                });
+
+                mannschaftButtonsContainer.appendChild(btn);
+            });
         };
 
         reader.readAsArrayBuffer(file);
