@@ -618,6 +618,19 @@
     const inputSpielerProTeam = document.getElementById('spielerProTeam');
     const inputAnzahlTeams = document.getElementById('anzahlTeams');
 
+    // --- Nur eines der beiden Felder kann gefüllt sein ---
+    inputSpielerProTeam.addEventListener('input', () => {
+        if (inputSpielerProTeam.value.trim() !== '') {
+            inputAnzahlTeams.value = '';
+        }
+    });
+
+    inputAnzahlTeams.addEventListener('input', () => {
+        if (inputAnzahlTeams.value.trim() !== '') {
+            inputSpielerProTeam.value = '';
+        }
+    });
+
     // Einstellungen initial als ausgeklappt markieren (bereits im HTML)
 
     document.querySelector('#einstellungenToggle .toggleText').addEventListener('click', () => {
