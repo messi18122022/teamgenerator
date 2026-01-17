@@ -290,6 +290,7 @@
         background-color: rgba(33, 150, 243, 0.1);
     }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body class="dark-mode">
 
@@ -303,7 +304,7 @@
     <label id="csvLabel">
         <span id="csvIcon">📄</span>
         <span id="csvText">Datei auswählen</span>
-        <input type="file" id="csvInput" accept=".csv" hidden>
+        <input type="file" id="csvInput" accept=".xlsx" hidden>
     </label>
 
     <table id="spielerTabelle" class="dark-mode">
@@ -437,10 +438,6 @@
         }
         if (!file) return;
 
-        if (!file.name.toLowerCase().endsWith('.csv')) {
-            return;
-        }
-
         const reader = new FileReader();
 
         reader.onload = event => {
@@ -462,34 +459,32 @@
                 anwesendZaehler.innerHTML = '<em>' + count + ' Spieler anwesend.</em>';
             }
 
-            const text = event.target.result.trim();
-            const zeilen = text.split('\n');
+            const data = new Uint8Array(event.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            const sheetName = workbook.SheetNames[0];
+            const sheet = workbook.Sheets[sheetName];
+
+            const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
 
             // Kopfzeile entfernen
-            zeilen.shift();
+            rows.shift();
 
-            zeilen.forEach(zeile => {
-                const spalten = zeile.split(',');
-                if (spalten.length < 4) return;
+            rows.forEach(spalten => {
+                if (spalten.length < 3) return;
 
-                const name = spalten[0].trim();
-                const staerke = spalten[2].trim();
-                const mannschaft = spalten[3].trim();
+                const name = String(spalten[0]).trim();
+                const staerke = String(spalten[1]).trim();
+                const mannschaft = String(spalten[2]).trim();
 
                 const tr = document.createElement('tr');
-
-                tr.classList.add('anwesend');
-                tr.classList.add(body.className);
+                tr.classList.add('anwesend', body.className);
 
                 const tdStatus = document.createElement('td');
-                tdStatus.classList.add('anwesend-spalte');
-                tdStatus.classList.add(body.className);
-
+                tdStatus.classList.add('anwesend-spalte', body.className);
                 tdStatus.addEventListener('click', () => {
                     tr.classList.toggle('anwesend');
                     updateZaehler();
                 });
-
                 tr.appendChild(tdStatus);
 
                 [name, mannschaft, staerke].forEach(wert => {
@@ -505,10 +500,7 @@
             updateZaehler();
         };
 
-        reader.onerror = () => {
-        };
-
-        reader.readAsText(file);
+        reader.readAsArrayBuffer(file);
     });
 
     // Einstellungen-Accordion
