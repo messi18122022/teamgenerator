@@ -348,7 +348,7 @@
         <input type="file" id="csvInput" accept=".xlsx" hidden>
     </label>
 
-    <table id="spielerTabelle" class="dark-mode">
+    <table id="spielerTabelle" class="dark-mode" style="display: none;">
         <thead>
             <tr>
                 <th class="anwesend-spalte dark-mode">Status</th>
@@ -362,7 +362,7 @@
         </tbody>
     </table>
 
-    <p id="anwesendZaehler"><em>0 Spieler anwesend.</em></p>
+    <p id="anwesendZaehler" style="display: none;"><em>0 Spieler anwesend.</em></p>
 </div>
 
 <h2 id="einstellungenToggle" style="cursor: pointer; user-select: none; display: flex; align-items: center; gap: 8px;">
@@ -491,6 +491,8 @@
             csvText.textContent = file.name;
         }
         if (!file) return;
+        table.style.display = '';
+        anwesendZaehler.style.display = '';
 
         const reader = new FileReader();
 
