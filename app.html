@@ -413,6 +413,16 @@
             });
         });
 
+        // --- Team-Tabellen ebenfalls an Modus anpassen ---
+        document.querySelectorAll('#teamsOutput table').forEach(teamTable => {
+            teamTable.className = mode;
+
+            teamTable.querySelectorAll('th, td, tr').forEach(el => {
+                el.classList.remove('dark-mode', 'light-mode');
+                el.classList.add(mode);
+            });
+        });
+
         // Set anwesendZaehler color for light mode
         if (mode === 'light-mode') {
             anwesendZaehlerP.style.color = '#000000';
