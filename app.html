@@ -285,6 +285,10 @@
         #einstellungenInhalt input.dimmed {
             opacity: 0.5;
         }
+    .drop-target {
+        outline: 2px dashed #2196f3;
+        background-color: rgba(33, 150, 243, 0.1);
+    }
     </style>
 </head>
 <body class="dark-mode">
@@ -330,6 +334,15 @@
     <label>
         Anzahl Teams: <input type="number" id="anzahlTeams" min="1">
     </label>
+</div>
+
+<h2 id="teamsToggle" style="cursor: pointer; user-select: none; display: flex; align-items: center; gap: 8px;">
+    <span id="chevronTeams" class="chevron geschlossen"></span>
+    Teams generieren
+</h2>
+<div id="teamsInhalt" class="inhalt ausgeklappt">
+    <button id="teamsGenerierenBtn">Teams generieren</button>
+    <div id="teamsOutput" style="display: flex; gap: 20px; margin-top: 15px; flex-wrap: wrap;"></div>
 </div>
 
 <script>
@@ -519,33 +532,408 @@
         }
     });
 
-    // Logik für dimmen der anderen Eingabe und nur Zahlen zulassen
-    inputSpielerProTeam.addEventListener('input', () => {
-        // Nur Zahlen zulassen
-        inputSpielerProTeam.value = inputSpielerProTeam.value.replace(/\D/g, '');
+    // Teams-Accordion
+    const teamsToggle = document.getElementById('teamsToggle');
+    const chevronTeams = document.getElementById('chevronTeams');
+    const teamsInhalt = document.getElementById('teamsInhalt');
+    const teamsBtn = document.getElementById('teamsGenerierenBtn');
+    const teamsOutput = document.getElementById('teamsOutput');
 
-        if (inputSpielerProTeam.value) {
-            inputAnzahlTeams.classList.add('dimmed');
-            inputAnzahlTeams.value = '';
-            inputSpielerProTeam.classList.remove('dimmed');
+    teamsToggle.addEventListener('click', () => {
+        if (teamsInhalt.classList.contains('eingeklappt')) {
+            teamsInhalt.classList.remove('eingeklappt');
+            teamsInhalt.classList.add('ausgeklappt');
+            chevronTeams.classList.add('offen');
         } else {
-            inputAnzahlTeams.classList.remove('dimmed');
+            teamsInhalt.classList.remove('ausgeklappt');
+            teamsInhalt.classList.add('eingeklappt');
+            chevronTeams.classList.remove('offen');
         }
     });
 
-    inputAnzahlTeams.addEventListener('input', () => {
-        // Nur Zahlen zulassen
-        inputAnzahlTeams.value = inputAnzahlTeams.value.replace(/\D/g, '');
+    teamsBtn.addEventListener('click', () => {
+        teamsOutput.innerHTML = '';
 
-        if (inputAnzahlTeams.value) {
-            inputSpielerProTeam.classList.add('dimmed');
-            inputSpielerProTeam.value = '';
-            inputAnzahlTeams.classList.remove('dimmed');
-        } else {
-            inputSpielerProTeam.classList.remove('dimmed');
+        const spieler = [];
+        tbody.querySelectorAll('tr.anwesend').forEach(tr => {
+            const tds = tr.querySelectorAll('td');
+            spieler.push({
+                name: tds[1].textContent,
+                mannschaft: tds[2].textContent,
+                staerke: parseInt(tds[3].textContent, 10)
+            });
+        });
+
+        if (spieler.length === 0) {
+            teamsOutput.innerHTML = '<em>Keine anwesenden Spieler.</em>';
+            return;
         }
+
+        const spielerProTeam = parseInt(inputSpielerProTeam.value, 10);
+        const anzahlTeams = parseInt(inputAnzahlTeams.value, 10);
+
+        let teams = [];
+
+        if (anzahlTeams) {
+            for (let i = 0; i < anzahlTeams; i++) teams.push([]);
+        } else if (spielerProTeam) {
+            // spielerProTeam ist MINDESTANZAHL
+            const min = spielerProTeam;
+            const max = spielerProTeam + 1;
+
+            // Anzahl Teams so berechnen, dass niemand unter dem Minimum ist
+            const teamCount = Math.floor(spieler.length / min);
+
+            if (teamCount === 0) {
+                teamsOutput.innerHTML = '<em>Zu wenige Spieler für diese Einstellung.</em>';
+                return;
+            }
+
+            for (let i = 0; i < teamCount; i++) teams.push([]);
+        } else {
+            teamsOutput.innerHTML = '<em>Bitte Einstellungen setzen.</em>';
+            return;
+        }
+
+        // === HÖCHSTE PRIORITÄT: Mannschaften trennen ===
+
+        // Spieler nach Altersstufe gruppieren
+        const gruppen = {};
+        spieler.forEach(sp => {
+            if (!gruppen[sp.mannschaft]) gruppen[sp.mannschaft] = [];
+            gruppen[sp.mannschaft].push(sp);
+        });
+
+        // Altersstufen numerisch sortieren (älter zuerst)
+        const altersstufen = Object.keys(gruppen).sort((a, b) => {
+            return parseInt(b.replace(/\D/g, ''), 10) - parseInt(a.replace(/\D/g, ''), 10);
+        });
+
+        let teamCursor = 0;
+
+        altersstufen.forEach((stufe, index) => {
+            const gruppe = gruppen[stufe].sort((a, b) => b.staerke - a.staerke);
+
+            // Wie viele Teams sollen diese Altersstufe primär füllen?
+            const anteil = Math.round((gruppe.length / spieler.length) * teams.length) || 1;
+            const zielTeams = teams.slice(teamCursor, teamCursor + anteil);
+
+            // Falls nicht genug freie Teams übrig sind
+            const verwendeteTeams = zielTeams.length > 0 ? zielTeams : teams;
+
+            let i = 0;
+            gruppe.forEach(sp => {
+                verwendeteTeams[i % verwendeteTeams.length].push(sp);
+                i++;
+            });
+
+            teamCursor += verwendeteTeams.length;
+        });
+
+        // === NUR FALLS LEERE TEAMS EXISTIEREN: mit nächstjüngerer Altersstufe auffüllen ===
+        teams.forEach((team, idx) => {
+            if (team.length > 0) return;
+
+            // nächstgelegene Altersstufe suchen
+            const alleSpieler = teams.flat();
+            const kandidaten = alleSpieler.filter(sp => {
+                const alter = parseInt(sp.mannschaft.replace(/\D/g, ''), 10);
+                return Math.abs(alter - parseInt(altersstufen[0].replace(/\D/g, ''), 10)) <= 1;
+            });
+
+            if (kandidaten.length > 0) {
+                team.push(kandidaten.pop());
+            }
+        });
+
+        // === GLOBALE TEAMGROESSEN-REGEL ===
+        if (spielerProTeam) {
+            const min = spielerProTeam;
+            const max = spielerProTeam + 1;
+
+            let changed = true;
+
+            // Solange es Teams mit > max und Teams mit < min gibt, ausgleichen
+            while (changed) {
+                changed = false;
+
+                const zuGross = teams.find(t => t.length > max);
+                const zuKlein = teams.find(t => t.length < min);
+
+                if (zuGross && zuKlein) {
+                    // Spieler vom groessten Team ins kleinste verschieben
+                    const spielerVerschieben = zuGross.pop();
+                    zuKlein.push(spielerVerschieben);
+                    changed = true;
+                }
+            }
+        }
+
+        teams.forEach((team, index) => {
+            const table = document.createElement('table');
+            table.className = body.className;
+
+            const thead = document.createElement('thead');
+            const trh = document.createElement('tr');
+            const th = document.createElement('th');
+            th.colSpan = 3;
+            th.textContent = 'Team ' + (index + 1);
+            th.className = body.className;
+            trh.appendChild(th);
+            thead.appendChild(trh);
+            table.appendChild(thead);
+
+            const tbodyTeam = document.createElement('tbody');
+            let sumStaerke = 0;
+
+            team.forEach(sp => {
+                sumStaerke += sp.staerke;
+                const tr = document.createElement('tr');
+                tr.className = body.className;
+
+                [sp.name, sp.mannschaft, sp.staerke].forEach(val => {
+                    const td = document.createElement('td');
+                    td.textContent = val;
+                    td.className = body.className;
+                    tr.appendChild(td);
+                });
+
+                tbodyTeam.appendChild(tr);
+            });
+
+            const avgRow = document.createElement('tr');
+            const avgTd = document.createElement('td');
+            avgTd.colSpan = 3;
+            avgTd.innerHTML = '<em>Durchschnittsstärke: ' + (sumStaerke / team.length).toFixed(2) + '</em>';
+            avgTd.className = body.className;
+            avgRow.appendChild(avgTd);
+            tbodyTeam.appendChild(avgRow);
+
+            table.appendChild(tbodyTeam);
+            teamsOutput.appendChild(table);
+        });
     });
 </script>
+<script>
+function updateTeamAvg(table) {
+    const rows = Array.from(table.querySelectorAll('tbody tr')).filter(tr => !tr.querySelector('em'));
+    if (rows.length === 0) return;
 
+    let sum = 0;
+    rows.forEach(tr => {
+        const staerke = parseInt(tr.children[2].textContent, 10);
+        sum += staerke;
+    });
+
+    let avgRow = Array.from(table.querySelectorAll('tbody tr')).find(tr => tr.querySelector('em'));
+    if (!avgRow) {
+        avgRow = document.createElement('tr');
+        const td = document.createElement('td');
+        td.colSpan = 3;
+        td.innerHTML = '';
+        avgRow.appendChild(td);
+        avgRow.className = body.className;
+        table.querySelector('tbody').appendChild(avgRow);
+    }
+
+    avgRow.querySelector('td').innerHTML = '<em>Durchschnittsstärke: ' + (sum / rows.length).toFixed(2) + '</em>';
+}
+
+function makeRowsDraggable() {
+    // Nur Spielerzeilen im tbody draggable machen, nicht Kopfzeilen (th)
+    const allRows = document.querySelectorAll('#teamsOutput tbody tr');
+    allRows.forEach(tr => {
+        // Durchschnittszeile (mit <em>) nicht draggable machen
+        if (tr.querySelector('em')) return;
+        tr.setAttribute('draggable', 'true');
+
+        tr.addEventListener('dragstart', e => {
+            e.dataTransfer.setData('text/plain', '');
+            tr.classList.add('dragging');
+            window.draggedRow = tr;
+
+            // Ganze Zeile als Drag-Image verwenden
+            const rect = tr.getBoundingClientRect();
+            const clone = tr.cloneNode(true);
+            clone.style.position = 'absolute';
+            clone.style.top = '-9999px';
+            document.body.appendChild(clone);
+            e.dataTransfer.setDragImage(clone, rect.width / 2, rect.height / 2);
+            setTimeout(() => document.body.removeChild(clone), 0);
+        });
+
+        tr.addEventListener('dragend', () => {
+            tr.classList.remove('dragging');
+            document.querySelectorAll('.drop-target').forEach(el => el.classList.remove('drop-target'));
+            window.draggedRow = null;
+        });
+
+        tr.addEventListener('dragover', e => {
+            e.preventDefault();
+            const dragged = window.draggedRow;
+            if (!dragged || dragged === tr || tr.querySelector('em')) return;
+            tr.classList.add('drop-target');
+        });
+
+        tr.addEventListener('dragleave', e => {
+            tr.classList.remove('drop-target');
+        });
+
+        tr.addEventListener('drop', e => {
+            e.preventDefault();
+            const dragged = window.draggedRow;
+            if (!dragged || dragged === tr) return;
+
+            const sourceTbody = dragged.closest('table').querySelector('tbody');
+            const targetTbody = tr.closest('table').querySelector('tbody');
+
+            const avgRowTarget = Array.from(targetTbody.querySelectorAll('tr')).find(r => r.querySelector('em'));
+
+            // Spieler nur verschieben, kein Tausch
+            sourceTbody.removeChild(dragged);
+            targetTbody.insertBefore(dragged, avgRowTarget);
+
+            tr.classList.remove('drop-target');
+
+            updateTeamAvg(sourceTbody.closest('table'));
+            updateTeamAvg(targetTbody.closest('table'));
+        });
+    });
+
+    const tables = document.querySelectorAll('#teamsOutput table');
+    tables.forEach(table => {
+        table.addEventListener('dragover', e => e.preventDefault());
+        table.addEventListener('drop', e => {
+            e.preventDefault();
+            const dragged = window.draggedRow;
+            if (!dragged) return;
+
+            const tbody = table.querySelector('tbody');
+            const avgRow = Array.from(tbody.querySelectorAll('tr')).find(r => r.querySelector('em'));
+            tbody.insertBefore(dragged, avgRow);
+            updateTeamAvg(tbody.closest('table'));
+
+            // Prüfen, ob das Quellteam leer ist (nur noch avgRow) und löschen
+            document.querySelectorAll('#teamsOutput table').forEach(tbl => {
+                const tBodyCheck = tbl.querySelector('tbody');
+                const rows = Array.from(tBodyCheck.querySelectorAll('tr')).filter(tr => !tr.querySelector('em'));
+                if (rows.length === 0) {
+                    tbl.remove();
+                }
+            });
+        });
+    });
+}
+
+// --- Neues Team-Placeholder für Drag&Drop hinzufügen ---
+function createNewTeamPlaceholder() {
+    let placeholder = document.getElementById('newTeamPlaceholder');
+    if (!placeholder) {
+        placeholder = document.createElement('div');
+        placeholder.id = 'newTeamPlaceholder';
+        placeholder.style.display = 'flex';
+        placeholder.style.flexDirection = 'column';
+        placeholder.style.alignItems = 'center';
+        placeholder.style.justifyContent = 'center';
+        placeholder.style.width = '150px';
+        placeholder.style.height = '50px';
+        placeholder.style.border = '2px dashed #2196f3';
+        placeholder.style.marginTop = '15px';
+        placeholder.style.cursor = 'pointer';
+        placeholder.style.color = '#2196f3';
+        placeholder.style.fontSize = '24px';
+        placeholder.textContent = '+';
+        teamsOutput.appendChild(placeholder);
+
+        // Drag & Drop EventListener für den Placeholder
+        placeholder.addEventListener('dragover', e => e.preventDefault());
+        placeholder.addEventListener('dragenter', e => placeholder.style.backgroundColor = 'rgba(33,150,243,0.1)');
+        placeholder.addEventListener('dragleave', e => placeholder.style.backgroundColor = '');
+        placeholder.addEventListener('drop', e => {
+            e.preventDefault();
+            const dragged = window.draggedRow;
+            if (!dragged) return;
+            placeholder.style.backgroundColor = '';
+
+            // Neues Team erstellen mit dem gezogenen Spieler
+            const table = document.createElement('table');
+            table.className = body.className;
+
+            const thead = document.createElement('thead');
+            const trh = document.createElement('tr');
+            const th = document.createElement('th');
+            th.colSpan = 3;
+            th.textContent = 'Team ' + (teamsOutput.querySelectorAll('table').length + 1);
+            th.className = body.className;
+            trh.appendChild(th);
+            thead.appendChild(trh);
+            table.appendChild(thead);
+
+            const tbodyTeam = document.createElement('tbody');
+
+            const tr = dragged;
+            const oldTbody = tr.parentNode;
+            oldTbody.removeChild(tr);
+            updateTeamAvg(oldTbody.closest('table'));
+
+            tbodyTeam.appendChild(tr);
+
+            const avgRow = document.createElement('tr');
+            const avgTd = document.createElement('td');
+            avgTd.colSpan = 3;
+            avgTd.innerHTML = '<em>Durchschnittsstärke: ' + parseInt(tr.children[2].textContent,10) + '</em>';
+            avgTd.className = body.className;
+            avgRow.appendChild(avgTd);
+            tbodyTeam.appendChild(avgRow);
+
+            table.appendChild(tbodyTeam);
+            teamsOutput.insertBefore(table, placeholder);
+
+
+            makeRowsDraggable();
+        });
+
+        // Klick-Listener für leeres Team
+        placeholder.addEventListener('click', () => {
+            const table = document.createElement('table');
+            table.className = body.className;
+
+            const thead = document.createElement('thead');
+            const trh = document.createElement('tr');
+            const th = document.createElement('th');
+            th.colSpan = 3;
+            th.textContent = 'Team ' + (teamsOutput.querySelectorAll('table').length + 1);
+            th.className = body.className;
+            trh.appendChild(th);
+            thead.appendChild(trh);
+            table.appendChild(thead);
+
+            const tbodyTeam = document.createElement('tbody');
+
+            const avgRow = document.createElement('tr');
+            const avgTd = document.createElement('td');
+            avgTd.colSpan = 3;
+            avgTd.innerHTML = '<em>Durchschnittsstärke: 0.00</em>';
+            avgTd.className = body.className;
+            avgRow.appendChild(avgTd);
+            tbodyTeam.appendChild(avgRow);
+
+            table.appendChild(tbodyTeam);
+            teamsOutput.insertBefore(table, placeholder);
+
+
+            makeRowsDraggable();
+        });
+    }
+}
+
+// Nach jedem Generieren der Teams:
+teamsBtn.addEventListener('click', () => {
+    setTimeout(() => {
+        makeRowsDraggable();
+        createNewTeamPlaceholder();
+    }, 50);
+});
+</script>
 </body>
 </html>
