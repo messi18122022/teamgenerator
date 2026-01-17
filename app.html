@@ -337,9 +337,11 @@
 
 <button id="darkModeToggle">Light Mode</button>
 
-<h1 class="dark-mode" id="titelToggle" style="cursor: pointer; user-select: none; display: flex; align-items: center; gap: 8px;">
-    <span id="chevron" class="chevron geschlossen"></span>
-    Spielerliste
+<h1 class="dark-mode" id="titelToggle" style="user-select: none; display: flex; align-items: center; gap: 8px;">
+    <span class="toggleText" style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
+        <span id="chevron" class="chevron geschlossen"></span>
+        Spielerliste
+    </span>
 </h1>
 <div id="spielerListeInhalt" class="inhalt ausgeklappt">
     <label id="csvLabel">
@@ -365,9 +367,11 @@
     <p id="anwesendZaehler" style="display: none;"><em>0 Spieler anwesend.</em></p>
 </div>
 
-<h2 id="einstellungenToggle" style="cursor: pointer; user-select: none; display: flex; align-items: center; gap: 8px;">
-    <span id="chevronEinstellungen" class="chevron geschlossen"></span>
-    Einstellungen
+<h2 id="einstellungenToggle" style="user-select: none; display: flex; align-items: center; gap: 8px;">
+    <span class="toggleText" style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
+        <span id="chevronEinstellungen" class="chevron geschlossen"></span>
+        Einstellungen
+    </span>
 </h2>
 <div id="einstellungenInhalt" class="inhalt ausgeklappt">
     <label>
@@ -378,9 +382,11 @@
     </label>
 </div>
 
-<h2 id="teamsToggle" style="cursor: pointer; user-select: none; display: flex; align-items: center; gap: 8px;">
-    <span id="chevronTeams" class="chevron geschlossen"></span>
-    Teams generieren
+<h2 id="teamsToggle" style="user-select: none; display: flex; align-items: center; gap: 8px;">
+    <span class="toggleText" style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
+        <span id="chevronTeams" class="chevron geschlossen"></span>
+        Teams generieren
+    </span>
 </h2>
 <div id="teamsInhalt" class="inhalt ausgeklappt">
     <button id="teamsGenerierenBtn" class="action-button">
@@ -473,7 +479,7 @@
         }
     });
 
-    titelToggle.addEventListener('click', () => {
+    document.querySelector('#titelToggle .toggleText').addEventListener('click', () => {
         if (spielerListeInhalt.classList.contains('eingeklappt')) {
             spielerListeInhalt.classList.remove('eingeklappt');
             spielerListeInhalt.classList.add('ausgeklappt');
@@ -568,7 +574,7 @@
 
     // Einstellungen initial als ausgeklappt markieren (bereits im HTML)
 
-    einstellungenToggle.addEventListener('click', () => {
+    document.querySelector('#einstellungenToggle .toggleText').addEventListener('click', () => {
         if (einstellungenInhalt.classList.contains('eingeklappt')) {
             einstellungenInhalt.classList.remove('eingeklappt');
             einstellungenInhalt.classList.add('ausgeklappt');
@@ -587,7 +593,7 @@
     const teamsBtn = document.getElementById('teamsGenerierenBtn');
     const teamsOutput = document.getElementById('teamsOutput');
 
-    teamsToggle.addEventListener('click', () => {
+    document.querySelector('#teamsToggle .toggleText').addEventListener('click', () => {
         if (teamsInhalt.classList.contains('eingeklappt')) {
             teamsInhalt.classList.remove('eingeklappt');
             teamsInhalt.classList.add('ausgeklappt');
